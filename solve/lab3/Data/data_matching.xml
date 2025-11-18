@@ -1,0 +1,36 @@
+<Rows>
+  <Row>
+    <CaseId>1</CaseId>
+    <Vacancy>1,0,0</Vacancy>
+    <CandidateId>c1</CandidateId>
+    <Resume>1,0,0</Resume>
+    <ExpectedSimilarity>1.0</ExpectedSimilarity>
+    <ExpectedOrder>c1,c2</ExpectedOrder>
+  </Row>
+  <Row>
+    <CaseId>2</CaseId>
+    <Vacancy>1,0,0</Vacancy>
+    <CandidateId>c2</CandidateId>
+    <Resume>0,1,0</Resume>
+    <ExpectedSimilarity>0.0</ExpectedSimilarity>
+    <ExpectedOrder>c1,c2</ExpectedOrder>
+  </Row>
+  <Row>
+    <CaseId>3</CaseId>
+    <Vacancy>1,1,0</Vacancy>
+    <CandidateId>c1</CandidateId>
+    <Resume>1,0,0</Resume>
+    <ExpectedSimilarity>0.7071</ExpectedSimilarity>
+    <ExpectedOrder>c1,c2</ExpectedOrder>
+  </Row>
+  <Row>
+    <CaseId>4</CaseId>
+    <Vacancy>1,1,0</Vacancy>
+    <CandidateId>c2</CandidateId>
+    <Resume>0,1,0</Resume>
+    <ExpectedSimilarity>0.7071</ExpectedSimilarity>
+    <ExpectedOrder>c1,c2</ExpectedOrder>
+  </Row>
+</Rows>
+
+

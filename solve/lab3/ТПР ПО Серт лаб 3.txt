@@ -1,0 +1,471 @@
+Приложение
+
+ФОНД ОЦЕНОЧНЫХ СРЕДСТВ
+
+ТЕХНОЛОГИИ ПРОМЫШЛЕННОЙ РАЗРАБОТКИ
+
+ ПРОГРАММНОГО ОБЕСПЕЧЕНИЯ. 
+
+ТРЕБОВАНИЯ
+
+
+2 Семестр
+
+Раздел 2 Тестирование
+
+2.1 Лабораторная работа (ЛР) - 11 Неделя
+
+Лабораторная работа №3 
+
+«Технологии промышленной разработки программного обеспечения. Сертификация» 
+(3 семестр)
+
+Варианты заданий
+
+Постановка задачи
+
+Разработать и протестировать модуль  в составе проектной модели, разработанной в рамках лабораторной работы № 3 в предшествующем семестре по дисциплине «Технологии промышленной разработки программного обеспечения. Требования».
+
+Студент выбирает проектную модель из заданного списка. 
+
+Минимальные требования к выполнению заданий.
+
+1) Тестирование необходимо провести по шаблону .NetFramework интегрированной среды разработки Visual Studio (шаблон из VS Community 2022)
+
+
+
+d двух вариантах: 
+
+элементарном, в котором тест с конкретным набором входных данных запускается как отдельное приложение;
+
+в варианте управления данными набор тест-случаев, каждый со своими входными данными, выполняется в рамках одного приложения с автоматическим переходом от одного тест-случая к следующему.
+
+Примеры построения тестов на основе указанных шаблонов показаны в Приложении.
+
+2) Должны быть разработаны и включены в отчёт:
+
+спецификация модуля (назначение, функции,  место в проектной модели),
+
+План тестирования с описанием тестовых случаев и обоснованием их количества и состава.
+
+Заключение по результатам тестирования.
+
+Методические указания.
+
+Допускается выбор студентом продукта, разработанного в предшествующем семестре им самим (из приведённого списка).
+
+Допускается использовать другой шаблон для Unit-тестирования среды VS.
+
+Выбор объекта разработки и тестирования
+
+Объекты разработки и тестирования
+
+Наименование объекта
+
+Идентификатор
+
+Сложность
+
+1
+
+Регистратура поликлиники
+
+БП1
+
+3
+
+2
+
+Отделение стационара больницы
+
+БП2
+
+6
+
+3
+
+Кол-центр скорой помощи
+
+БП4
+
+3
+
+4
+
+Станция МЧС
+
+БП5
+
+6
+
+5
+
+Библиотека
+
+БП6
+
+6
+
+6
+
+Театральная касса
+
+БП7
+
+6
+
+7
+
+Детский сад
+
+БП8
+
+3
+
+8
+
+Склад
+
+БП9
+
+6
+
+9
+
+Кухня
+
+БП10
+
+9
+
+10
+
+Магазин online
+
+БП112
+
+3
+
+11
+
+Отделение банка
+
+БП13
+
+6
+
+12
+
+Умный дом
+
+БП14
+
+6
+
+13
+
+Жилищный кооператив
+
+БП15
+
+3
+
+14
+
+Продажа авиабилетов
+
+БП16
+
+6
+
+15
+
+Гостиница
+
+БП17
+
+3
+
+16 
+
+Метеостанция
+
+БП18
+
+6
+
+17
+
+Ресторан
+
+БП19
+
+9
+
+18
+
+Транспортная контора
+
+БП20
+
+3
+
+19
+
+Туристическое агентство
+
+БП21
+
+6
+
+20
+
+Расписание в средней школе
+
+БП22
+
+6
+
+Критерии оценки
+
+Качество программного кода:
+
+стиль (в т.ч.: имена, отступы и проч.) (0-2)
+
+структурированность (0-2)
+
+0-4
+
+баллов
+
+Объем реализации 
+
+- количество строк в модуле k
+
+- количество тестовых случаев m
+
+целое от
+
+(k + m)/100
+
+баллов
+
+Владение теорией
+
+Грамотность комментариев, понимание архитектуры Visual Studio, типовых проектов, принципов организации оконного интерфейса операционной системы
+
+0-3
+
+баллов
+
+Итого
+
+0-7 и выше
+
+Приложение
+
+Элементарный проект тестировани csUniTestLibrary01 (Windows 8.1):
+
+using System;
+
+using System.Collections.Generic;
+
+using System.Linq;
+
+using System.Text;
+
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+
+//using Microsoft.VisualStudio.TestTools.UnitTesting; //VS2019
+
+namespace csUniTestLibrary_1
+
+{
+
+    public class UnderTest
+
+    {
+
+        public static double Calculate(double x)
+
+        { return x * x; }
+
+    }
+
+    [TestClass]
+
+    public class UnitTest1
+
+    {
+
+        [TestMethod]
+
+        public void TestMethod1()
+
+        {
+
+            double input = 3;
+
+            double outcome;
+
+            double expected = 9;
+
+            //            UnderTest underTest = new UnderTest();
+
+            //            outcome = underTest.Calculate(input);
+
+            outcome = UnderTest.Calculate(input);
+
+            Assert.AreEqual(expected, outcome,0.01, "Hurra"); 
+
+        }
+
+        [TestMethod]
+
+        public void TestMethod2()
+
+        {
+
+            double input = 4;
+
+            double outcome;
+
+            double expected = 9;
+
+            //            UnderTest underTest = new UnderTest();
+
+            outcome = UnderTest.Calculate(3);
+
+            Assert.AreEqual(expected, outcome, 0.01, "Hurra");
+
+        }
+
+    }
+
+}
+
+Тест, управляемый данными:
+
+using System;
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+using System.Data;
+
+namespace csUnitTestP01
+
+{
+
+    public class UnderTest
+
+    {
+
+        public static double Calculate(double x)
+
+        { return x + x; }
+
+    }
+
+    [TestClass]
+
+    public class UnitTest1
+
+    {
+
+        private TestContext testContextInstance;
+
+        public TestContext TestContext
+
+        {
+
+            get
+
+            {
+
+                return testContextInstance;
+
+            }
+
+            set
+
+            {
+
+                testContextInstance = value;
+
+            }
+
+        }
+
+        [TestMethod]
+
+        [DeploymentItem("H:\\data.xml")]
+
+        [DataSource("Microsoft.VisualStudio.TestTools.DataSource.XML",
+
+                   "H:\\Data.xml",
+
+                   "Row",
+
+                    DataAccessMethod.Sequential)]
+
+        public void TestMethod1()
+
+        {
+
+            double input = Convert.ToDouble(TestContext.DataRow["X"].ToString());
+
+            double outcome;
+
+//            double expected = 9;
+
+            //            UnderTest underTest = new UnderTest();
+
+            //            outcome = underTest.Calculate(input);
+
+            outcome = UnderTest.Calculate(input);
+
+            Assert.AreEqual(Convert.ToDouble(TestContext.DataRow["Result"].ToString()), outcome, 0.01, "Hurra");
+
+        }
+
+    }
+
+}
+
+Данные:
+
+<Rows>
+
+  <Row>
+
+    <X>1</X>
+
+    <Result>2</Result>
+
+  </Row>
+
+  <Row>
+
+    <X>2</X>
+
+    <Result>4</Result>
+
+  </Row>
+
+  <Row>
+
+    <X>3</X>
+
+    <Result>6</Result>
+
+  </Row>
+
+  <Row>
+
+    <X>4</X>
+
+    <Result>8</Result>
+
+  </Row>
+
+</Rows> 
