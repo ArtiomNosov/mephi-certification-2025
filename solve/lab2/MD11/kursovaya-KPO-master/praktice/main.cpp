@@ -1,111 +1,95 @@
 #pragma once
-#include "opencv2/imgproc.hpp"
-#include "opencv2/imgcodecs.hpp"
+
 #include "opencv2/highgui.hpp"
-#include <iostream>
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/imgproc.hpp"
+
 #include "header.h"
-#include <fstream>
+
+#include <iostream>
+#include <limits>
 #include <string>
-using namespace cv;
-using namespace std;
+
 int main(int argc, char** argv)
 {
 	setlocale(LC_ALL, "rus");
-	// Declare variables
-	Mat src, dst;
-	Mat kernel;
-	Point anchor;
-	double delta;
-	int ddepth;
-	const char* window_name = "filter";
-	String imageName;
-	anchor = Point(-1, -1);
-	delta = 0;
-	ddepth = -1;
-	int choice;
-	String outfile;
 
+	cv::Mat src, dst;
+	int choice = -1;
+	std::string imagePath;
+	std::string outputPath;
+	std::string errorMessage;
 
 	do {
-		cout << "Введите путь до файла для обработки - ";
-		cin >> imageName;
-		if (CheckFormat(imageName, src) == 0) {
-			return 0;
-		}
-		cout << "Введите номер желаемого фильтра" << endl;
-		cout << "0) Выйти из меню" << endl;
-		cout << "1) Тиснение" << endl;
-		cout << "2) Увелечение резкости" << endl;
-		cout << "3) Размытие" << endl;
-		cout << "4) Фильтр Собеля" << endl;
-		cin >> choice;
-
-		switch (choice) {
-		case 0:
+		std::cout << "Р’РІРµРґРёС‚Рµ РїСѓС‚СЊ Рє РёР·РѕР±СЂР°Р¶РµРЅРёСЋ: ";
+		if (!std::getline(std::cin >> std::ws, imagePath)) {
+			std::cout << "Р’РІРѕРґ РїСЂРµСЂРІР°РЅ.\n";
 			break;
-		case 1:
-			cout << "Введите путь до файла отфильтрованного изображения" << endl;
-			cin >> outfile;
-			if (CheckOutput(outfile) == 0) {
-				cout << "Путь до файла указан неверно";
-				return 0;
-			}
-			Emboss(&src, &dst, kernel, anchor, delta);
-			cv::imwrite(outfile, dst);
-			cout << "Изображение записано в указанный файл!" << endl;
-			break;
-
-		case 2:
-			cout << "Введите путь до файла отфильтрованного изображения" << endl;
-			cin >> outfile;
-			if (CheckOutput(outfile) == 0) {
-				cout << "Путь до файла указан неверно";
-				return 0;
-			}
-			Sharpening(&src, &dst, kernel, anchor, delta);
-			cv::imwrite(outfile, dst);
-			cout << "Изображение записано в указанный файл!" << endl;
-			break;
-
-		case 3:
-			cout << "Введите путь до файла отфильтрованного изображения" << endl;
-			cin >> outfile;
-			if (CheckOutput(outfile) == 0) {
-				cout << "Путь до файла указан неверно";
-				return 0;
-			}
-			blur(src, dst, Size(5, 5), anchor);
-			cv::imwrite(outfile, dst);
-			cout << "Изображение записано в указанный файл!" << endl;
-			break;
-		case 4:
-			cout << "Введите путь до файла отфильтрованного изображения" << endl;
-			cin >> outfile;
-			if (CheckOutput(outfile) == 0) {
-				cout << "Путь до файла указан неверно";
-				return 0;
-			}
-			Sobel(&src, &dst, kernel, anchor, delta);
-			cv::imwrite(outfile, dst);
-			cout << "Изображение записано в указанный файл!" << endl;
-			break;
-		default:
-			cout << "Некорректный ввод!" << endl;
-			return 0;
 		}
 
+		if (!CheckFormat(imagePath, src, errorMessage)) {
+			std::cout << errorMessage << std::endl;
+			continue;
+		}
 
-	} while (choice != 0);
+		std::cout << "\nР’С‹Р±РµСЂРёС‚Рµ С„РёР»СЊС‚СЂ:\n"
+			<< "0) Р’С‹С…РѕРґ\n"
+			<< "1) Р РµР»СЊРµС„ (emboss)\n"
+			<< "2) РџРѕРІС‹С€РµРЅРёРµ СЂРµР·РєРѕСЃС‚Рё\n"
+			<< "3) Р Р°Р·РјС‹С‚РёРµ (5x5)\n"
+			<< "4) РћРїРµСЂР°С‚РѕСЂ РЎРѕР±РµР»СЏ\n"
+			<< "Р’Р°С€ РІС‹Р±РѕСЂ: ";
 
-	
-		
-	
-	
-	
-	
-	
-		
+		if (!(std::cin >> choice)) {
+			std::cout << "РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ РІРІРѕРґ.\n";
+			break;
+		}
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+		if (choice == 0) {
+			std::cout << "Р—Р°РІРµСЂС€РµРЅРёРµ СЂР°Р±РѕС‚С‹.\n";
+			break;
+		}
+
+		std::cout << "Р’РІРµРґРёС‚Рµ РїСѓС‚СЊ РґР»СЏ СЃРѕС…СЂР°РЅРµРЅРёСЏ РѕР±СЂР°Р±РѕС‚Р°РЅРЅРѕРіРѕ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ: ";
+		if (!std::getline(std::cin >> std::ws, outputPath)) {
+			std::cout << "Р’РІРѕРґ РїСЂРµСЂРІР°РЅ.\n";
+			break;
+		}
+		if (!CheckOutput(outputPath, errorMessage)) {
+			std::cout << errorMessage << std::endl;
+			continue;
+		}
+
+		try {
+			switch (choice) {
+			case 1:
+				Emboss(src, dst);
+				break;
+			case 2:
+				Sharpening(src, dst);
+				break;
+			case 3:
+				BoxBlur(src, dst, cv::Size(5, 5));
+				break;
+			case 4:
+				Sobel(src, dst);
+				break;
+			default:
+				std::cout << "РќРµРёР·РІРµСЃС‚РЅС‹Р№ РЅРѕРјРµСЂ С„РёР»СЊС‚СЂР°.\n";
+				continue;
+			}
+
+			if (!cv::imwrite(outputPath, dst)) {
+				std::cout << "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ С„Р°Р№Р» РїРѕ СѓРєР°Р·Р°РЅРЅРѕРјСѓ РїСѓС‚Рё.\n";
+				continue;
+			}
+			std::cout << "Р¤Р°Р№Р» СѓСЃРїРµС€РЅРѕ СЃРѕС…СЂР°РЅС‘РЅ.\n";
+		}
+		catch (const cv::Exception& e) {
+			std::cout << "РћС€РёР±РєР° РѕР±СЂР°Р±РѕС‚РєРё РёР·РѕР±СЂР°Р¶РµРЅРёСЏ: " << e.what() << std::endl;
+		}
+	} while (true);
+
 	return 0;
-	
 }
-	

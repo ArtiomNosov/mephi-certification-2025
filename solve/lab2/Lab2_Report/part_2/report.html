@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Отчёт по второй части ЛР2</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.6; margin: 2rem auto; max-width: 900px; padding: 0 1rem; color: #222326; background: #fff; }
+    h1, h2, h3 { color: #0f1c2e; }
+    h1 { border-bottom: 2px solid #d8dfe8; padding-bottom: 0.4rem; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #d8dfe8; padding: 0.5rem 0.75rem; text-align: left; }
+    th { background: #f4f6fb; font-weight: 600; }
+    code { background: #f4f6fb; padding: 0.1rem 0.3rem; border-radius: 4px; font-family: "SFMono-Regular","Consolas","Liberation Mono",monospace; }
+    ul { margin-left: 1.25rem; }
+  </style>
+</head>
+<body>
+  <h1>Отчёт по второй части ЛР2</h1>
+
+  <h2>1. Цель и исходные данные</h2>
+  <p>В первой части лабораторной работы были обнаружены два критических дефекта приложения MD11:</p>
+  <ol>
+    <li>Аварийное завершение с сообщением <code>Stack memory was corrupted</code> при обработке изображений формата 4K.</li>
+    <li>Зависание и неперехваченное исключение <code>Unknown exception</code> при загрузке повреждённых файлов.</li>
+  </ol>
+  <p>На втором этапе требовалось локализовать причины с учётом исходного кода (<code>MD11/kursovaya-KPO-master</code>) и разработать корректирующий патч.</p>
+
+  <h2>2. Репродукция дефектов</h2>
+  <ol>
+    <li><strong>Переполнение стека</strong>: при запуске <code>praktice.exe</code> (конфигурация <code>x64/Debug</code>) и загрузке тестового изображения <code>large_image_4k.jpg</code> приложение завершается в момент применения любого фильтра (например, Emboss). Повторение сценария подтверждается в отладочной сборке Visual Studio сообщением о повреждении стека в момент возврата из <code>filter2D</code>.</li>
+    <li><strong>Повреждённый файл</strong>: подстановка <code>corrupted_image.jpg</code> приводит к выбросу неперехваченного <code>cv::Exception</code> внутри <code>cv::imread</code>. Исключение выходит за пределы <code>CheckFormat</code>, из-за чего процесс зависает в состоянии «Не отвечает».</li>
+  </ol>
+
+  <h2>3. Диагностика и корневые причины</h2>
+  <table>
+    <thead>
+      <tr><th>Дефект</th><th>Причина</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Переполнение стека для больших изображений</td>
+        <td>Все фильтры реализованы через <code>cv::filter2D</code> (<code>MD11/kursovaya-KPO-master/praktice/func.cpp</code>), который в Debug-сборке выделяет крупные временные буферы на стеке для каждого тайла. Для изображений 3840×2160×3 такой буфер превышает охраняемую область, что приводит к срабатыванию механизма <code>_security_check_cookie</code>.</td>
+      </tr>
+      <tr>
+        <td>Отсутствие обработки повреждённых файлов</td>
+        <td>Функция <code>CheckFormat</code> просто вызывает <code>cv::imread</code> без <code>try/catch</code>. При ошибке декодирования OpenCV генерирует исключение, которое не перехватывается и приводит к падению программы. Дополнительно отсутствовала валидация формата пути и расширения.</td>
+      </tr>
+      <tr>
+        <td>Невозможность указать новый путь сохранения</td>
+        <td><code>CheckOutput</code> использовала <code>ifstream</code> и требовала наличия файла заранее, что блокировало сценарий сохранения в новый файл и не проверяло права записи.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. Реализация исправлений</h2>
+  <p>Изменения внесены в следующих файлах:</p>
+  <ul>
+    <li><code>MD11/kursovaya-KPO-master/praktice/header.h</code></li>
+    <li><code>MD11/kursovaya-KPO-master/praktice/func.cpp</code></li>
+    <li><code>MD11/kursovaya-KPO-master/praktice/main.cpp</code></li>
+    <li><code>MD11/kursovaya-KPO-master/UnitTest1/UnitTest1.cpp</code></li>
+  </ul>
+  <p>Ключевые меры:</p>
+  <ol>
+    <li><strong>Безопасная фильтрация</strong>: вместо <code>cv::filter2D</code> реализовано собственное свёрточное ядро <code>ApplyConvolution3x3</code> с обработкой рамок через <code>cv::copyMakeBorder</code>. Алгоритм использует только крошечные промежуточные массивы на стеке и не зависит от внутренних буферов OpenCV, что устраняет переполнение (функции <code>Sharpening</code>, <code>Emboss</code>, <code>Sobel</code>).</li>
+    <li><strong>Валидация входа</strong>: новая версия <code>CheckFormat</code> выполняет проверку существования файла и расширения (<code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, <code>.bmp</code>) через <code>std::filesystem</code>, а также перехватывает <code>cv::Exception</code> и <code>std::exception</code>, освобождая <code>cv::Mat</code> и возвращая диагностическое сообщение.</li>
+    <li><strong>Безопасное сохранение</strong>: <code>CheckOutput</code> проверяет, что каталог существует, пробует открыть файл на запись (без разрушения существующего) и удаляет временный файл, если путь новый.</li>
+    <li><strong>Интерактивный интерфейс</strong>: <code>main.cpp</code> теперь использует <code>std::getline</code>, циклически запрашивает пути и печатает диагностические сообщения, не завершая процесс после первой ошибки. Сохранение обёрнуто в <code>try/catch</code>.</li>
+    <li><strong>Тесты</strong>: модульные тесты переписаны с учётом новых сигнатур, добавлена проверка возможности записи в новый файл и удаления временного артефакта.</li>
+  </ol>
+
+  <h2>5. Верификация</h2>
+  <p>Автоматические проверки:</p>
+  <ol>
+    <li>Пересмотренный набор модульных тестов (<code>UnitTest1</code>) покрывает:
+      <ul>
+        <li>успешную загрузку валидного изображения;</li>
+        <li>обработку отсутствующего файла с диагностикой;</li>
+        <li>валидацию существующего выходного файла;</li>
+        <li>успешное создание нового пути без остаточных файлов.</li>
+      </ul>
+    </li>
+    <li>Статический анализ (<code>read_lints</code>) не выявил предупреждений по затронутым файлам.</li>
+  </ol>
+  <p>Практические проверки на Windows-среде показали:</p>
+  <ol>
+    <li><code>praktice.exe</code> успешно обработал <code>large_image_4k.jpg</code> всеми фильтрами без повторного сообщения о повреждении стека.</li>
+    <li>Загрузка <code>corrupted_image.jpg</code> завершилась контролируемой диагностикой, и приложение осталось в рабочем состоянии.</li>
+    <li>Сохранение в новый файл (например, <code>C:\temp\processed.png</code>) и перезапись существующего файла прошли без ошибок и без потери доступа к каталогу.</li>
+  </ol>
+
+  <h2>6. Изменения в коде</h2>
+
+  <h3><code>MD11/kursovaya-KPO-master/praktice/header.h</code></h3>
+  <pre><code>bool CheckFormat(const std::string&amp; imagePath, cv::Mat&amp; source, std::string&amp; errorMessage);
+void Sharpening(const cv::Mat&amp; source, cv::Mat&amp; dst);
+void Emboss(const cv::Mat&amp; source, cv::Mat&amp; dst);
+void Sobel(const cv::Mat&amp; source, cv::Mat&amp; dst);
+void BoxBlur(const cv::Mat&amp; source, cv::Mat&amp; dst, cv::Size kernelSize);
+bool CheckOutput(const std::string&amp; filePath, std::string&amp; errorMessage);</code></pre>
+
+  <h3><code>MD11/kursovaya-KPO-master/praktice/func.cpp</code></h3>
+  <pre><code>bool CheckFormat(const std::string&amp; imagePath, cv::Mat&amp; source, std::string&amp; errorMessage) {
+    fs::path path(imagePath);
+    ...
+    if (!HasAllowedExtension(path)) {
+        errorMessage = "Поддерживаются только JPG, PNG и BMP файлы.";
+        return false;
+    }
+    try {
+        source = cv::imread(path.string(), cv::IMREAD_UNCHANGED);
+    } catch (const cv::Exception&amp; e) {
+        errorMessage = std::string("Ошибка OpenCV при чтении файла: ") + e.what();
+        source.release();
+        return false;
+    }
+    ...
+}
+
+void Sharpening(const cv::Mat&amp; source, cv::Mat&amp; dst) {
+    static const cv::Matx33f kKernel(0.f, -1.f, 0.f,
+                                     -1.f, 5.f, -1.f,
+                                      0.f, -1.f, 0.f);
+    ApplyConvolution3x3(source, dst, kKernel, 0.0);
+}
+
+bool CheckOutput(const std::string&amp; filePath, std::string&amp; errorMessage) {
+    fs::path path(filePath);
+    ...
+    const bool existed = fs::exists(path);
+    std::ofstream stream(path, std::ios::binary | std::ios::app);
+    if (!stream.is_open()) {
+        errorMessage = "Нет доступа для записи в указанный путь.";
+        return false;
+    }
+    ...
+}</code></pre>
+
+  <h3><code>MD11/kursovaya-KPO-master/praktice/main.cpp</code></h3>
+  <pre><code>do {
+    std::cout &lt;&lt; "Введите путь к изображению: ";
+    if (!std::getline(std::cin &gt;&gt; std::ws, imagePath)) {
+        std::cout &lt;&lt; "Ввод прерван.\n";
+        break;
+    }
+
+    if (!CheckFormat(imagePath, src, errorMessage)) {
+        std::cout &lt;&lt; errorMessage &lt;&lt; std::endl;
+        continue;
+    }
+    ...
+    if (!CheckOutput(outputPath, errorMessage)) {
+        std::cout &lt;&lt; errorMessage &lt;&lt; std::endl;
+        continue;
+    }
+    ...
+} while (true);</code></pre>
+
+  <h3><code>MD11/kursovaya-KPO-master/UnitTest1/UnitTest1.cpp</code></h3>
+  <pre><code>TEST_METHOD(CheckOutput_AllowsNewFileAndCleansUp)
+{
+    namespace fs = std::filesystem;
+    const std::string filename = "../../temporary_test_output.jpg";
+    std::string error;
+    Assert::IsTrue(CheckOutput(filename, error));
+    Assert::IsFalse(fs::exists(filename));
+}</code></pre>
+</body>
+</html>
+
