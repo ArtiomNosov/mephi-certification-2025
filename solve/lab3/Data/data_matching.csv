@@ -5,3 +5,4 @@ CaseId,Vacancy,CandidateId,Resume,ExpectedSimilarity,ExpectedOrder
 4,"1,1,0",c2,"0,1,0",0.7071,"c1,c2"
 
 
+
